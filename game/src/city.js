@@ -68,8 +68,6 @@ export function roadPoint(rng) {
 export function freeSpotNear(city, x, y, r = 16) {
   // Nudge a point onto the nearest road if it sits inside a building.
   if (!collidesWithSolid(city, x, y, r)) return { x, y };
-  const { nearestRoadX, nearestRoadY } = { nearestRoadX: null, nearestRoadY: null };
-  void nearestRoadX; void nearestRoadY;
   // Search outward in a spiral of road intersections.
   for (const rx of ROAD_X) for (const ry of ROAD_Y) {
     if (!collidesWithSolid(city, rx, ry, r)) return { x: rx, y: ry };

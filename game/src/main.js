@@ -30,7 +30,6 @@ function frame(now) {
     else if (input.wasPressed('continue') && hasSave(world)) loadGame(world);
   } else if (world.state === 'play') {
     if (input.wasPressed('pause')) { world.state = 'pause'; world.audio.engineStop(); }
-    if (input.down('space') && false) { /* space is brake in a car */ }
     // Ctrl+S save: detect via keydown on window.
     update(world, input, dt);
   } else if (world.state === 'pause') {
@@ -40,6 +39,10 @@ function frame(now) {
       const fresh = makeWorld(seed);
       Object.assign(world, fresh, { input: world.input, audio: world.audio });
       world.state = 'title';
+      // Fresh clock and shot counter: the old `last` would make the first
+      // frame of the new game jump a full clamped step.
+      last = performance.now();
+      shotFrames = 0;
     }
   }
   render(world, ctx);
@@ -50,6 +53,14 @@ function frame(now) {
   }
   requestAnimationFrame(frame);
 }
+// Auto-pause when the tab is hidden: the police keep chasing while the player
+// is away, so pause instead of letting Mara get busted in the background.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && world.state === 'play') {
+    world.state = 'pause';
+    world.audio.engineStop();
+  }
+});
 window.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.code === 'KeyS') {
     e.preventDefault();

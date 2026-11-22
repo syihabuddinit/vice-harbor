@@ -125,7 +125,7 @@ export function updatePeds(world, dt) {
       p.flee -= dt;
       p.angle = angleTo(world.player.x, world.player.y, p.x, p.y);
       const sp = p.speed * 2.2;
-      const nx = p.x + Math.cos(p.angle) * sp * dt, ny = p.y + Math.sin(p.angle) * sp * dt;
+      const nx = p.x + Math.cos(p.angle) * sp * dt, ny = p.y + Math.sin(p.angle) * p.speed * dt;
       if (!collidesWithSolid(world.city, nx, ny, 10)) { p.x = nx; p.y = ny; }
       continue;
     }
@@ -167,8 +167,11 @@ export function updatePolice(world, dt) {
   const targetCops = want >= 2 && !player.car ? 2 : 0;
   while (world.policeCars.length < targetCars) {
     const a = Math.random() * Math.PI * 2;
-    const x = clamp(player.x + Math.cos(a) * 420, 60, WORLD_W - 60);
-    const y = clamp(player.y + Math.sin(a) * 420, 60, WORLD_H - 60);
+    // Spawn close enough that road-snapping (up to ~177 px diagonally) still
+    // leaves the car within 500 px: otherwise wanted decays below 1 on the
+    // very tick the police spawn, and the chase is cleared before it starts.
+    const x = clamp(player.x + Math.cos(a) * 300, 60, WORLD_W - 60);
+    const y = clamp(player.y + Math.sin(a) * 300, 60, WORLD_H - 60);
     world.policeCars.push(makeCar(nearestRoadX(x), nearestRoadY(y), 0, PALETTE.police, 'police'));
   }
   while (world.police.length < targetCops) {
