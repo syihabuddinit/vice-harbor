@@ -39,6 +39,10 @@ Kings, want her gone. Her sister Lena runs the Palm Court garage. Three missions
 | C (title) | Continue a saved game |
 | M | Sound on/off |
 
+## Screenshots
+
+The four staged scenes in `screenshots/` (`?shot=start|drive|chase|mission`, 1280×720 each) were captured from the running game.
+
 ## Run it
 
 Serve `game/` with any static server, for example `node serve.ts`, then open
