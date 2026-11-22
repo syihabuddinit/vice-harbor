@@ -1,50 +1,69 @@
-// Staged screenshot scenes: ?shot=start|drive|chase|mission&seed=1
-// Each sets up a readable scene and sets window.__shotReady when drawn.
-import { makeWorld, startGame } from './world.js';
-import { startMission } from './missions.js';
-import { makeCar } from './entities.js';
-import { PALETTE } from './config.js';
+// Staged screenshot scenes. ?shot=start|drive|chase|mission sets the world
+// up exactly as the screenshot names say, so a screenshot shows the game at
+// its best: the city, the HUD, traffic, the police and a mission.
+import { createCar, createPed } from './entities.js';
+import { randomRoadPoint } from './city.js';
 
-export function applyShot(world, params) {
-  const shot = params.get('shot');
-  if (!shot) return false;
-  const seed = Number(params.get('seed') || 1);
-  world.seed = seed;
-  if (shot === 'start') {
-    world.state = 'title';
-    world.cam.x = 640; world.cam.y = 200;
-    world.player.x = 1160; world.player.y = 590;
-    return true;
+export function applyShot(world, name) {
+  const rng = world.rng;
+  const p = world.player;
+  if (name === 'start') {
+    // Mara on foot in Downtown, morning traffic around her.
+    p.x = 1150; p.y = 700; p.onFoot = true; p.car = null;
+    p.angle = -Math.PI / 2;
+    return { camera: { x: 1150, y: 700 }, title: true };
   }
-  startGame(world);
-  if (shot === 'drive') {
-    // Mara driving through Downtown on Mission 1.
-    const car = makeCar(1160, 590, 0, '#ff2a5a', 'player');
+  if (name === 'drive') {
+    // Mara driving up Palm Court with traffic ahead and the minimap live.
+    const car = createCar(rng, 1000, 920, 'sedan', 'player');
+    car.angle = 0;
+    world.cars.push(car);
+    p.car = car;
+    p.onFoot = false;
+    p.x = car.x; p.y = car.y; p.angle = 0;
+    car.speed = 260;
+    return { camera: { x: 1000, y: 920 }, title: false };
+  }
+  if (name === 'chase') {
+    // Three stars: two police cars on Mara's tail, sirens implied by the HUD.
+    const car = createCar(rng, 1400, 920, 'sedan', 'player');
+    car.angle = 0;
+    world.cars.push(car);
+    p.car = car;
+    p.onFoot = false;
+    p.x = car.x; p.y = car.y; p.angle = 0;
     car.speed = 320;
-    world.cars.push(car);
-    world.player.car = car; world.player.x = car.x; world.player.y = car.y;
-    world.cam.x = 640; world.cam.y = 260;
-    return true;
-  }
-  if (shot === 'chase') {
-    startMission(world, 2);
     world.wanted = 3;
-    const car = makeCar(900, 830, 0, '#ff2a5a', 'player');
-    car.speed = 380;
-    world.cars.push(car);
-    world.player.car = car; world.player.x = car.x; world.player.y = car.y;
-    for (let i = 0; i < 3; i++) {
-      world.policeCars.push(makeCar(900 - 160 - i * 90, 830, 0, PALETTE.police, 'police'));
+    world.lastCrimeAt = world.time;
+    for (let i = 0; i < 2; i++) {
+      const pc = createCar(rng, 1400 - 160 - i * 90, 920 + (i === 0 ? -14 : 14), 'police', 'police');
+      pc.angle = 0;
+      pc.speed = 330;
+      world.cars.push(pc);
     }
-    world.cam.x = 500; world.cam.y = 500;
-    return true;
+    return { camera: { x: 1400, y: 920 }, title: false };
   }
-  if (shot === 'mission') {
-    startMission(world, 1);
-    world.player.x = 2100; world.player.y = 1350;
-    world.cam.x = 1500; world.cam.y = 1000;
-    return true;
+  if (name === 'mission') {
+    // Harbor Heist in progress at the port: crates, guards, one crate taken.
+    p.x = 480; p.y = 1520; p.onFoot = true; p.car = null;
+    p.angle = Math.PI / 4;
+    world.missions.index = 1;
+    world.missions.started = true;
+    world.missions.step = 1;
+    world.missions.crates = 1;
+    world.cash = 420;
+    world.respect = 25;
+    for (let i = 0; i < 3; i++) {
+      const g = { x: 300 + i * 200, y: 1500 + (i % 2) * 80, angle: 0, shootCooldown: 1, kind: 'guard' };
+      world.guards.push(g);
+    }
+    const ped = createPed(rng, 520, 1480);
+    world.peds.push(ped);
+    return { camera: { x: 500, y: 1520 }, title: false };
   }
-  return false;
+  return { camera: { x: p.x, y: p.y }, title: false };
 }
-export function markShotReady() { window.__shotReady = true; }
+
+export function shotNames() {
+  return ['start', 'drive', 'chase', 'mission'];
+}

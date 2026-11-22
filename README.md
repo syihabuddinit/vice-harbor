@@ -14,14 +14,14 @@ Mara Voss, ex-getaway driver, is back in Vice Harbor. Her old crew, the Harbor
 Kings, want her gone. Her sister Lena runs the Palm Court garage. Three missions:
 
 1. **First Fare** — steal a car, pick up a package at the Marina, deliver it to the Docks.
-2. **Harbor Heist** — collect three crates at the port while the guards shoot back.
+2. **Harbor Heist** — collect three crates at the port while the Harbor Kings' guards shoot back.
 3. **The Getaway** — lose a 3-star wanted level and make it to the Safehouse in 90 seconds.
 
 ## What is in the game
 
-- A 2600×1900 city: Downtown, Palm Court, Canal Row, the Docks, Marina and Sunset Beach, on a road grid with buildings, parks, containers and the sea.
+- A 2600×1900 coastal city: Downtown, Palm Court, Canal Row, the Docks, Marina and Sunset Beach, on a road grid with buildings, parks, containers and the sea.
 - On foot (WASD, mouse aim, click to shoot, Shift to sprint) and by car (WASD to drive, E to steal / exit — stealing a car raises your wanted level).
-- Traffic (14 cars following the road grid) and 26 pedestrians who walk the streets and flee gunfire.
+- Traffic (cars following the road grid) and 26 pedestrians who walk the streets and flee gunfire.
 - Wanted level 0–5 stars: police cars chase and ram you, foot cops chase you on foot; getting busted costs $150, getting wasted costs $100. Wanted decays when you stay out of trouble.
 - Combat with a pistol, cash and health pickups, a taxi side job (drive a waving passenger to the marker), cash and respect progression.
 - HUD with cash, health, wanted stars, mission objective and a live minimap; title / pause / game-over screens; save with Ctrl+S and continue with C; synthesised WebAudio sound (engine, sirens, gunshots, jingles — M to mute).
@@ -46,15 +46,14 @@ http://localhost:8080 — no network, no build step, no assets outside `game/`.
 
 ## Files
 
-- `game/src/config.js` — tuning, palette, city constants
-- `game/src/rng.js` — seeded RNG and angle helpers
-- `game/src/city.js` — city generation, roads, buildings, collision
-- `game/src/audio.js` — synthesised WebAudio sounds
-- `game/src/input.js` — keyboard + mouse
-- `game/src/entities.js` — player, cars, traffic, peds, police, bullets
-- `game/src/missions.js` — story and the 3 missions, taxi side job
-- `game/src/world.js` — world state and the fixed-step simulation
-- `game/src/render.js` — drawing, HUD, minimap, menus
+- `game/src/city.js` — the city: road grid, districts, buildings, collision
+- `game/src/rng.js` — seeded random numbers
+- `game/src/world.js` — world state and the one step that moves it all
+- `game/src/entities.js` — player, traffic, pedestrians, police, bullets
+- `game/src/missions.js` — the three missions and the taxi side job
+- `game/src/render.js` — everything the game shows: city, HUD, minimap, menus
+- `game/src/audio.js` — synthesised WebAudio sound
+- `game/src/input.js` — keyboard and mouse input
+- `game/src/save.js` — save and continue
 - `game/src/shots.js` — staged screenshot scenes (`?shot=start|drive|chase|mission`)
-- `game/src/save.js` — localStorage save / load
-- `game/src/main.js` — boot and the game loop
+- `game/src/main.js` — boot and game loop

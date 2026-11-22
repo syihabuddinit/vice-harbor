@@ -1,40 +1,66 @@
-// Keyboard + mouse input, with edge-triggered key presses.
-export function makeInput(canvas) {
-  const keys = new Set();
-  const pressed = new Set();
-  let mouseX = 0, mouseY = 0, mouseDown = false, mouseClicked = false;
-  const KEYMAP = {
-    KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down',
-    KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
-    ShiftLeft: 'sprint', ShiftRight: 'sprint', KeyE: 'enter', Space: 'space',
-    KeyP: 'pause', Escape: 'pause', KeyM: 'mute', KeyC: 'continue',
-    Enter: 'confirm',
-  };
-  function onKey(e, down) {
-    const name = KEYMAP[e.code];
-    if (!name) return;
-    if (down) { if (!keys.has(name)) pressed.add(name); keys.add(name); }
-    else keys.delete(name);
-    if (name === 'space' || name === 'up' || name === 'down') e.preventDefault();
-  }
-  window.addEventListener('keydown', e => onKey(e, true));
-  window.addEventListener('keyup', e => onKey(e, false));
-  window.addEventListener('blur', () => { keys.clear(); });
-  canvas.addEventListener('mousemove', e => {
-    const r = canvas.getBoundingClientRect();
-    mouseX = (e.clientX - r.left) * (canvas.width / r.width);
-    mouseY = (e.clientY - r.top) * (canvas.height / r.height);
-  });
-  canvas.addEventListener('mousedown', e => { if (e.button === 0) { mouseDown = true; mouseClicked = true; } });
-  window.addEventListener('mouseup', () => { mouseDown = false; });
+// Keyboard and mouse input. The browser side fills this state from events;
+// the simulation only reads the plain control object it produces, which the
+// tests can build by hand.
+export function createInput() {
   return {
-    keys, mouseX: () => mouseX, mouseY: () => mouseY,
-    down: (n) => keys.has(n),
-    axisX() { return (keys.has('right') ? 1 : 0) - (keys.has('left') ? 1 : 0); },
-    axisY() { return (keys.has('down') ? 1 : 0) - (keys.has('up') ? 1 : 0); },
-    clicked() { return mouseClicked; },
-    held() { return mouseDown; },
-    consume() { pressed.clear(); mouseClicked = false; },
-    wasPressed(n) { return pressed.has(n); },
+    keys: new Set(),
+    mouse: { x: 0, y: 0, down: false },
+    attach(canvas) {
+      if (typeof window === 'undefined') return;
+      window.addEventListener('keydown', (e) => {
+        this.keys.add(e.code);
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+          e.preventDefault();
+        }
+      });
+      window.addEventListener('keyup', (e) => this.keys.delete(e.code));
+      window.addEventListener('blur', () => this.keys.clear());
+      canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        this.mouse.x = e.clientX - rect.left;
+        this.mouse.y = e.clientY - rect.top;
+      });
+      canvas.addEventListener('mousedown', () => { this.mouse.down = true; });
+      window.addEventListener('mouseup', () => { this.mouse.down = false; });
+      canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    },
+    pressed(code) {
+      return this.keys.has(code);
+    },
+  };
+}
+
+// Turn raw key/mouse state into the control object the world steps with.
+export function readControls(input, screen) {
+  const k = input.keys;
+  const up = k.has('KeyW') || k.has('ArrowUp');
+  const down = k.has('KeyS') || k.has('ArrowDown');
+  const left = k.has('KeyA') || k.has('ArrowLeft');
+  const right = k.has('KeyD') || k.has('ArrowRight');
+  return {
+    up, down, left, right,
+    sprint: k.has('ShiftLeft') || k.has('ShiftRight'),
+    shoot: input.mouse.down,
+    aimScreenX: input.mouse.x,
+    aimScreenY: input.mouse.y,
+    enterCar: k.has('KeyE'),
+    pause: k.has('KeyP') || k.has('Escape'),
+    mute: k.has('KeyM'),
+    save: k.has('KeyS') && (k.has('ControlLeft') || k.has('ControlRight')),
+    confirm: k.has('Enter') || k.has('Space'),
+    continueSave: k.has('KeyC'),
+    // World-space aim, filled in by the caller from the camera.
+    aimX: 0,
+    aimY: 0,
+    screen,
+  };
+}
+
+export function blankControls() {
+  return {
+    up: false, down: false, left: false, right: false,
+    sprint: false, shoot: false, aimScreenX: 0, aimScreenY: 0,
+    enterCar: false, pause: false, mute: false, save: false,
+    confirm: false, continueSave: false, aimX: 0, aimY: 0, screen: null,
   };
 }

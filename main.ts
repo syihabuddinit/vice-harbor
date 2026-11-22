@@ -1,10 +1,11 @@
-// Vice Harbor entry program (Node 22, standard library only).
-// Copies game/ and screenshots/ beside this file to /output and writes
-// /output/dossier.json with the vendored make.fun library.
+// Vice Harbor — make.fun gta6-01 entry program (Node 22, standard library
+// only). It hands the game in: copies game/ and screenshots/ from beside
+// this file into the output directory and writes /output/dossier.json with
+// the vendored make.fun library, exactly as the scorer rebuilds it.
 // Outside the grader, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-game.ts';
@@ -12,16 +13,19 @@ import { buildDossier } from './vendor/makefun-game.ts';
 const here = fileURLToPath(new URL('.', import.meta.url));
 const out = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
-// Clear stale output first: files removed from the repo must not linger in
-// /output, or the dossier would describe a game that is no longer there.
 if (!existsSync(join(here, 'game', 'index.html'))) {
   throw new Error('game/index.html is missing — nothing to hand in');
 }
-rmSync(out, { recursive: true, force: true });
+if (!existsSync(join(here, 'vendor', 'makefun-game.ts'))) {
+  throw new Error('vendor/makefun-game.ts is missing — the dossier library must ship with the entry');
+}
+
 mkdirSync(out, { recursive: true });
 cpSync(join(here, 'game'), join(out, 'game'), { recursive: true });
 mkdirSync(join(out, 'screenshots'), { recursive: true });
-if (existsSync(join(here, 'screenshots'))) cpSync(join(here, 'screenshots'), join(out, 'screenshots'), { recursive: true });
+if (existsSync(join(here, 'screenshots'))) {
+  cpSync(join(here, 'screenshots'), join(out, 'screenshots'), { recursive: true });
+}
 
 writeFileSync(
   join(out, 'dossier.json'),
@@ -32,4 +36,13 @@ writeFileSync(
     game_max_bytes: 50331648,
     game_path_max_bytes: 1000,
   }),
+);
+
+// Say what was handed in, so a local run shows the dossier actually landed.
+const shotCount = existsSync(join(out, 'screenshots'))
+  ? readdirSync(join(out, 'screenshots')).length
+  : 0;
+console.log(
+  'Vice Harbor handed in: game/ + ' + shotCount + ' screenshots, dossier.json ' +
+  statSync(join(out, 'dossier.json')).size + ' bytes -> ' + out,
 );
